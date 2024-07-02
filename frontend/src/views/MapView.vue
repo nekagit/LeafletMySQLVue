@@ -11,24 +11,37 @@ import 'leaflet/dist/leaflet.css'
 import { onMounted, ref } from 'vue'
 import L from 'leaflet'
 
-const center = ref([37.7749, -122.4194])
+const germanyCenter = [51.1657, 10.4515] // Center of Germany
+
 const map = ref(null)
 
 const setupLeafletMap = () => {
-  map.value = L.map('mapContainer').setView(center.value, 13)
+  map.value = L.map('mapContainer').setView(germanyCenter, 6) // Zoom level adjusted for visibility
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    attribution:
+      'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 18
   }).addTo(map.value)
 }
 
 const addMarkers = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:3306/data')
+    const response = await fetch('http://127.0.0.1:3000/data')
     const data = await response.json()
-    data.forEach(region => {
-      const marker = L.marker([region.Latitude, region.Longitude]).addTo(map.value)
-      marker.bindPopup(`<b>${region.Region}</b><br>Durchschnittsgewicht: ${region.Durchschnittsgewicht.toFixed(2)} kg`).openPopup()
+    console.log('Fetched data:', data) // Check the structure of data fetched
+
+    data.forEach((region) => {
+      // Ensure Latitude and Longitude are valid
+      if (region.Latitude !== undefined && region.Longitude !== undefined) {
+        const marker = L.marker([region.Latitude, region.Longitude]).addTo(map.value)
+        marker
+          .bindPopup(
+            `<b>${region.Region}</b><br>Durchschnittsgewicht: ${region.Durchschnittsgewicht.toFixed(2)} kg`
+          )
+          .openPopup()
+      } else {
+        console.warn(`Skipping marker for ${region.Region} due to missing Latitude or Longitude.`)
+      }
     })
   } catch (error) {
     console.error('Error fetching data:', error)
@@ -43,9 +56,9 @@ onMounted(() => {
 
 <style scoped>
 #mapContainer {
-  margin:0;
+  margin: 0;
   width: 100vw;
   height: 90vh;
-  margin-top:3vh;
+  margin-top: 3vh;
 }
 </style>
