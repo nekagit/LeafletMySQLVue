@@ -1,34 +1,46 @@
 <template>
-  <main>
-    <h1>Welcome to the Leaflet Region</h1>
+  <main class="container-fluid">
+    <h1 class="text-center mt-4 mb-4">Welcome to the Leaflet Region</h1>
 
-    <form @submit.prevent="fetchDistances">
-      <label for="distance">Maximale Entfernung (in Metern):</label>
-      <input type="text" id="distance" v-model="maxDistance" />
-      <button type="submit">Suchen</button>
+    <form @submit.prevent="fetchDistances" class="mb-4">
+      <div class="input-group">
+        <label for="distance" class="input-group-text">Maximale Entfernung (in Metern):</label>
+        <input type="text" id="distance" v-model="maxDistance" class="form-control" />
+        <button type="submit" class="btn btn-primary">Suchen</button>
+      </div>
     </form>
 
-    <div v-if="distances.length > 0" id="distancesContainer">
-      <h3>Distanz zwischen PLZ weniger als {{ maxDistance }}m</h3>
-      <table border="1" style="border: 1px solid red">
-        <tr bgcolor="#f4eefa">
-          <td><b>Distanz (m)</b></td>
-          <td><b>PLZ Von</b></td>
-          <td><b>PLZ Nach</b></td>
-          <td><b>Koordinaten Von</b></td>
-          <td><b>Koordinaten Nach</b></td>
-        </tr>
-        <tr v-for="distance in distances" :key="distance.PLZ_From + '-' + distance.PLZ_To">
-          <td>{{ distance.Distance.toFixed(2) }}</td>
-          <td>{{ distance.PLZ_From }}</td>
-          <td>{{ distance.PLZ_To }}</td>
-          <td>{{ distance.Latitude_From.toFixed(4) }}, {{ distance.Longitude_From.toFixed(4) }}</td>
-          <td>{{ distance.Latitude_To.toFixed(4) }}, {{ distance.Longitude_To.toFixed(4) }}</td>
-        </tr>
-      </table>
+    <div v-if="distances.length > 0" id="distancesContainer" class="card">
+      <div class="card-body p-0">
+        <h3 class="card-header">Distanz zwischen PLZ weniger als {{ maxDistance }}m</h3>
+        <table class="table table-bordered table-striped mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Distanz (m)</th>
+              <th scope="col">PLZ Von</th>
+              <th scope="col">PLZ Nach</th>
+              <th scope="col">Koordinaten Von</th>
+              <th scope="col">Koordinaten Nach</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="distance in distances" :key="distance.PLZ_From + '-' + distance.PLZ_To">
+              <td>{{ distance.Distance.toFixed(2) }}</td>
+              <td>{{ distance.PLZ_From }}</td>
+              <td>{{ distance.PLZ_To }}</td>
+              <td>{{ distance.Latitude_From.toFixed(4) }}, {{ distance.Longitude_From.toFixed(4) }}</td>
+              <td>{{ distance.Latitude_To.toFixed(4) }}, {{ distance.Longitude_To.toFixed(4) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div id="mapContainer"></div>
+    <div id="mapContainer" class="card">
+      <div class="card-body p-0">
+        <div id="map" style="height: 500px;"></div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -43,7 +55,7 @@ const maxDistance = ref('') // Initial value for testing
 const distances = ref([])
 
 const setupLeafletMap = () => {
-  map.value = L.map('mapContainer').setView(germanyCenter, 6)
+  map.value = L.map('map').setView(germanyCenter, 6)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 18
@@ -118,9 +130,6 @@ onMounted(() => {
 
 <style scoped>
 #mapContainer {
-  margin: 0;
-   width: 90vw;
-  height: 90vh;
   margin-top: 3vh;
 }
 </style>

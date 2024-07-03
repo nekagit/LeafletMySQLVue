@@ -1,8 +1,10 @@
 <template>
-  <main>
-    <h1>Welcome to the Leaflet Average</h1>
-    <div id="container">
-      <div id="mapContainer"></div>
+  <main class="container-fluid">
+    <h1 class="text-center mt-4 mb-4">Welcome to the Leaflet Average</h1>
+    <div id="mapContainer" class="card">
+      <div class="card-body p-0">
+        <div id="map" style="height: 600px;"></div>
+      </div>
     </div>
   </main>
 </template>
@@ -17,7 +19,7 @@ const germanyCenter = [51.1657, 10.4515] // Center of Germany
 const map = ref(null)
 
 const setupLeafletMap = () => {
-  map.value = L.map('mapContainer').setView(germanyCenter, 6) // Zoom level adjusted for visibility
+  map.value = L.map('map').setView(germanyCenter, 6) // Zoom level adjusted for visibility
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution:
       'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -56,9 +58,6 @@ onMounted(() => {
 
 <style scoped>
 #mapContainer {
-  margin: 0;
-  width: 90vw;
-  height: 90vh;
   margin-top: 3vh;
 }
 </style>

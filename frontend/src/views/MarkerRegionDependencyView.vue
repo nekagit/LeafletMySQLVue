@@ -1,32 +1,45 @@
 <template>
-  <main>
-    <h1>Welcome to the Leaflet Region</h1>
+  <main class="container-fluid">
+    <h1 class="text-center mt-4 mb-4">Welcome to the Leaflet Region</h1>
 
-    <form @submit.prevent="fetchShipmentsData">
-      <label for="plz">Postleitzahl eingeben:</label>
-      <input type="text" id="plz" v-model="plz" />
-      <button type="submit">Abfrage ausführen</button>
+    <form @submit.prevent="fetchShipmentsData" class="mb-4">
+      <div class="input-group">
+        <label for="plz" class="input-group-text">Postleitzahl eingeben:</label>
+        <input type="text" id="plz" v-model="plz" class="form-control" />
+        <button type="submit" class="btn btn-primary">Abfrage ausführen</button>
+      </div>
     </form>
 
-    <div v-if="shipments.length > 0" id="shipmentsContainer">
-      <h3>Anzahl der Sendungen für PLZ {{ plz }}</h3>
-      <table border="1" style="border: 1px solid red">
-        <tr bgcolor="#f4eefa">
-          <td><b>PLZ Name</b></td>
-          <td><b>PLZ To</b></td>
-          <td><b>Anzahl der Sendungen</b></td>
-        </tr>
-        <tr v-for="shipment in shipments" :key="shipment.Postleitzahl">
-          <td>{{ shipment.Region }}</td>
-          <td>{{ shipment.Postleitzahl }}</td>
-          <td>{{ shipment.Anzahl_der_Sendungen }}</td>
-        </tr>
-      </table>
+    <div v-if="shipments.length > 0" id="shipmentsContainer" class="card">
+      <div class="card-body p-0">
+        <h3 class="card-header">Anzahl der Sendungen für PLZ {{ plz }}</h3>
+        <table class="table table-bordered table-striped mb-0">
+          <thead>
+            <tr>
+              <th scope="col">PLZ Name</th>
+              <th scope="col">PLZ To</th>
+              <th scope="col">Anzahl der Sendungen</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="shipment in shipments" :key="shipment.Postleitzahl">
+              <td>{{ shipment.Region }}</td>
+              <td>{{ shipment.Postleitzahl }}</td>
+              <td>{{ shipment.Anzahl_der_Sendungen }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <div id="mapContainer"></div>
+    <div id="mapContainer" class="card">
+      <div class="card-body p-0">
+        <div id="map" style="height: 500px;"></div>
+      </div>
+    </div>
   </main>
 </template>
+
 <script setup>
 import 'leaflet/dist/leaflet.css'
 import { onMounted, ref } from 'vue'
@@ -38,10 +51,9 @@ const plz = ref('')
 const shipments = ref([])
 
 const setupLeafletMap = () => {
-  map.value = L.map('mapContainer').setView(germanyCenter, 6) // Adjust zoom level as needed
+  map.value = L.map('map').setView(germanyCenter, 6)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution:
-      'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 18
   }).addTo(map.value)
 }
@@ -52,6 +64,7 @@ const fetchShipmentsData = async () => {
     const data = await response.json()
     shipments.value = data
     console.log('Shipment data:', data)
+
     // Clear existing markers
     map.value.eachLayer((layer) => {
       if (layer instanceof L.Marker) {
@@ -73,13 +86,13 @@ const fetchShipmentsData = async () => {
         }
       }
     })
-    if (!bounds.isValid()) {
+
+    if (bounds.isValid()) {
       map.value.fitBounds(bounds)
     }
   } catch (error) {
     console.error('Error fetching data:', error)
   }
-  console.log('Map initialized:', map.value)
 }
 
 onMounted(() => {
@@ -89,9 +102,6 @@ onMounted(() => {
 
 <style scoped>
 #mapContainer {
-  margin: 0;
-   width: 90vw;
-  height: 90vh;
   margin-top: 3vh;
 }
 </style>
