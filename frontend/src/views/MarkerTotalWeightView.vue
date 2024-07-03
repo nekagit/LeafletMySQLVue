@@ -2,7 +2,7 @@
   <main class="container-fluid">
     <h1 class="text-center mt-4 mb-4">Welcome to the Leaflet Region</h1>
 
-    <form @submit.prevent="fetchShipmentsData" class="mb-4">
+    <form @submit.prevent="fetchTotalWeight" class="mb-4">
       <div class="input-group">
         <label for="plz" class="input-group-text">Postleitzahl eingeben:</label>
         <input type="text" id="plz" v-model="plz" class="form-control" />
@@ -60,7 +60,7 @@ const setupLeafletMap = () => {
   }).addTo(map.value)
 }
 
-const fetchShipmentsData = async () => {
+const fetchTotalWeight = async () => {
   try {
     const response = await fetch(`http://127.0.0.1:3000/totalWeight?plz=${plz.value}`)
     const data = await response.json()
