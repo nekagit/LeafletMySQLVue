@@ -79,13 +79,15 @@ const weightQueries = {
   `,
   shipments: (plz) => `
     SELECT 
-        plz.Name AS Region, 
-        PLZ_To AS Postleitzahl, 
-        COUNT(Date) AS Anzahl_der_Sendungen 
+      plz.Name AS Region, 
+      plz.PLZ AS Postleitzahl, 
+      COUNT(shipments.ID) AS Anzahl_der_Sendungen,
+      ST_X(plz.Coord) AS Longitude,
+      ST_Y(plz.Coord) AS Latitude
     FROM shipments 
-    INNER JOIN plz ON PLZ_To = plz.PLZ 
-    WHERE PLZ_To = '${plz}'
-    GROUP BY plz.Name, PLZ_To
+    INNER JOIN plz ON shipments.PLZ_From = plz.PLZ 
+    WHERE shipments.PLZ_From = '${plz}'
+    GROUP BY plz.Name, plz.PLZ, plz.Coord
   `,
   region: `
     SELECT 
@@ -109,11 +111,11 @@ const weightQueries = {
 const queryDatabase = (query, res) => {
   connection.query(query, (error, results) => {
     if (error) {
-      console.log(query, error, results)
+      console.log(query, error, results);
       res.status(500).json({ error: "Error querying the database" });
       return;
     }
-    console.log(results)
+    console.log(results);
     res.status(200).json(results);
   });
 };

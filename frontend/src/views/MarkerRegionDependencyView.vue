@@ -10,7 +10,7 @@
 
     <div v-if="shipments.length > 0" id="shipmentsContainer">
       <h3>Anzahl der Sendungen für PLZ {{ plz }}</h3>
-      <table border="1" style="border:1px solid red; empty-cells:hide;">
+      <table border="1" style="border: 1px solid red">
         <tr bgcolor="#f4eefa">
           <td><b>PLZ Name</b></td>
           <td><b>PLZ To</b></td>
@@ -24,12 +24,9 @@
       </table>
     </div>
 
-    <div id="container">
-      <div id="mapContainer"></div>
-    </div>
+    <div id="mapContainer"></div>
   </main>
 </template>
-
 <script setup>
 import 'leaflet/dist/leaflet.css'
 import { onMounted, ref } from 'vue'
@@ -41,7 +38,7 @@ const plz = ref('')
 const shipments = ref([])
 
 const setupLeafletMap = () => {
-  map.value = L.map('mapContainer').setView(germanyCenter, 6) // Zoom level adjusted for visibility
+  map.value = L.map('mapContainer').setView(germanyCenter, 6) // Adjust zoom level as needed
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution:
       'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -54,9 +51,33 @@ const fetchShipmentsData = async () => {
     const response = await fetch(`http://127.0.0.1:3000/shipments?plz=${plz.value}`)
     const data = await response.json()
     shipments.value = data
+    console.log('Shipment data:', data)
+    // Clear existing markers
+    map.value.eachLayer((layer) => {
+      if (layer instanceof L.Marker) {
+        map.value.removeLayer(layer)
+      }
+    })
+
+    const bounds = L.latLngBounds()
+    data.forEach((shipment) => {
+      const { Latitude, Longitude, Region } = shipment
+      if (Latitude && Longitude) {
+        const lat = parseFloat(Latitude)
+        const lng = parseFloat(Longitude)
+        if (!isNaN(lat) && !isNaN(lng)) {
+          const marker = L.marker([lat, lng]).addTo(map.value).bindPopup(Region)
+          bounds.extend(marker.getLatLng())
+        }
+      }
+    })
+    if (!bounds.isValid()) {
+      map.value.fitBounds(bounds)
+    }
   } catch (error) {
     console.error('Error fetching data:', error)
   }
+  console.log('Map initialized:', map.value)
 }
 
 onMounted(() => {
