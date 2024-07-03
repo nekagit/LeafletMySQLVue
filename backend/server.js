@@ -1,69 +1,39 @@
 const express = require("express");
 const mysql = require("mysql2");
-const cors = require("cors"); // Add this line to import cors module
-const populateDatabase = require("./populatedDB.js");
+const cors = require("cors");
+const populateDatabase = require("./populatedDB.js"); // Adjust the path as necessary
+
+const weightController = require("./api/leafletController.js");
 
 const hostname = "127.0.0.1";
 const port = 3000;
 
 const app = express();
-
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});
 // CORS setup
 const corsOptions = {
-  origin: "http://localhost:5173", // Allow requests from this origin
-  methods: ["GET"], // Allow only GET requests
+  origin: "http://localhost:5173", 
+  methods: ["GET"], 
 };
 
 app.use(cors(corsOptions));
+app.get("/averageWeight", weightController.averageWeight);
+app.get("/sendingWeight", weightController.sendingWeight);
+app.get("/weight", weightController.weight);
+app.get("/distanceWeight", weightController.distanceWeight);
+app.get("/region", weightController.region);
+app.get("/shipments", weightController.shipments);
 
-const connection = mysql.createConnection({
-  host: "localhost",
-  user: "admin",
-  password: "root",
-  database: "KEP_1M",
-  port: 3306,
-});
-
-connection.connect((err) => {
+populateDatabase((err) => {
   if (err) {
-    console.error("Error connecting to MySQL: ", err.stack);
-    return;
-  }
-  console.log("Connected to MySQL as id " + connection.threadId);
-
-  // Populate the database
-  populateDatabase((err) => {
-    if (err) {
-      console.error("Error populating the database: ", err.stack);
-      return;
-    }
+    console.error("Failed to populate database:", err.message);
+  } else {
     console.log("Database populated successfully");
-  });
-});
-
-const query = `
-    SELECT 
-        plz.Name AS Region, 
-        PLZ_From AS Postleitzahl, 
-        plz.Residents AS Einwohner, 
-        AVG(Weight) AS Durchschnittsgewicht,
-        plz.Latitude,  
-        plz.Longitude  
-    FROM shipments
-    INNER JOIN plz ON PLZ_From=plz.PLZ
-    WHERE Weight > 0 AND Weight <= 31.5
-    GROUP BY PLZ_From
-    ORDER BY AVG(Weight) DESC
-`;
-
-app.get("/data", (req, res) => {
-  connection.query(query, (error, results) => {
-    if (error) {
-      res.status(500).json({ error: "Error querying the database" });
-      return;
-    }
-    res.status(200).json(results);
-  });
+  }
 });
 
 app.use((req, res) => {

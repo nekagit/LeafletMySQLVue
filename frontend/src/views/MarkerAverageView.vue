@@ -1,5 +1,6 @@
 <template>
   <main>
+    <h1>Welcome to the Leaflet Average</h1>
     <div id="container">
       <div id="mapContainer"></div>
     </div>
@@ -26,7 +27,7 @@ const setupLeafletMap = () => {
 
 const addMarkers = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:3000/data')
+    const response = await fetch('http://127.0.0.1:3000/averageWeight')
     const data = await response.json()
     console.log('Fetched data:', data) // Check the structure of data fetched
 
