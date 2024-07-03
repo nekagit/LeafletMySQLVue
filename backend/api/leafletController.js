@@ -43,39 +43,21 @@ const weightQueries = {
     ORDER BY AVG(shipments.Weight) DESC
     LIMIT 1
   `,
-  weight: `
+  totalWeight: (plz) => `
     SELECT 
         plz.PLZ AS Postleitzahl, 
         plz.Name AS Region, 
-        plz.Residents AS Einwohner, 
-        AVG(shipments.Weight) AS Durchschnittsgewicht,
+        SUM(shipments.Weight) AS Gesamtgewicht,
+        COUNT(shipments.ID) AS Anzahl_der_Sendungen,
         ST_X(plz.Coord) AS Longitude,
         ST_Y(plz.Coord) AS Latitude,
+        plz.Residents AS Einwohner,
         plz.Area AS Flaeche,
         plz.Shape AS Geometrie
     FROM plz
     LEFT JOIN shipments ON plz.PLZ = shipments.PLZ_From
-    WHERE shipments.Weight > 0 AND shipments.Weight <= 31.5
+    WHERE plz.PLZ = '${plz}' AND shipments.Weight > 0 AND shipments.Weight <= 31.5
     GROUP BY plz.PLZ
-    ORDER BY AVG(shipments.Weight) DESC
-    LIMIT 1
-  `,
-  distanceWeight: `
-    SELECT 
-        plz.PLZ AS Postleitzahl, 
-        plz.Name AS Region, 
-        plz.Residents AS Einwohner, 
-        AVG(shipments.Weight) AS Durchschnittsgewicht,
-        ST_X(plz.Coord) AS Longitude,
-        ST_Y(plz.Coord) AS Latitude,
-        plz.Area AS Flaeche,
-        plz.Shape AS Geometrie
-    FROM plz
-    LEFT JOIN shipments ON plz.PLZ = shipments.PLZ_From
-    WHERE shipments.Weight > 0 AND shipments.Weight <= 31.5
-    GROUP BY plz.PLZ
-    ORDER BY AVG(shipments.Weight) DESC
-    LIMIT 1
   `,
   shipments: (plz) => `
     SELECT 
@@ -89,6 +71,18 @@ const weightQueries = {
     WHERE shipments.PLZ_From = '${plz}'
     GROUP BY plz.Name, plz.PLZ, plz.Coord
   `,
+  distance: (maxDistance) => `
+       SELECT 
+        ST_Distance_Sphere(plz1.Coord, plz2.Coord) AS Distance,
+        plz1.PLZ AS PLZ_From,
+        plz2.PLZ AS PLZ_To
+    FROM plz AS plz1
+    CROSS JOIN plz AS plz2
+    WHERE ST_Distance_Sphere(plz1.Coord, plz2.Coord) < ${maxDistance}
+        AND plz1.PLZ != plz2.PLZ
+    ORDER BY Distance ASC
+    LIMIT 10
+`,
 };
 
 const queryDatabase = (query, res) => {
@@ -106,9 +100,25 @@ const queryDatabase = (query, res) => {
 module.exports = {
   averageWeight: (req, res) => queryDatabase(weightQueries.averageWeight, res),
   sendingWeight: (req, res) => queryDatabase(weightQueries.sendingWeight, res),
-  weight: (req, res) => queryDatabase(weightQueries.weight, res),
-  distanceWeight: (req, res) =>
-    queryDatabase(weightQueries.distanceWeight, res),
+  totalWeight: (req, res) => {
+    const { plz } = req.query;
+    if (!plz) {
+      res.status(400).json({ error: "Missing 'plz' parameter" });
+      return;
+    }
+    queryDatabase(weightQueries.totalWeight(plz), res);
+  },
+  distance: (req, res) => {
+    const { distance } = req.query;
+    if (!distance || isNaN(distance)) {
+      res
+        .status(400)
+        .json({ error: "Invalid or missing 'distance' parameter" });
+      return;
+    }
+    const maxDistance = parseInt(distance);
+    queryDatabase(distanceQuery(maxDistance), res);
+  },
   shipments: (req, res) => {
     const { plz } = req.query;
     if (!plz) {

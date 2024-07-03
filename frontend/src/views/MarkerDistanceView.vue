@@ -1,9 +1,30 @@
 <template>
   <main>
-    <h1>Welcome to the Leaflet Distance</h1>
-    <div id="container">
-      <div id="mapContainer"></div>
+    <h1>Welcome to the Leaflet Region</h1>
+
+    <form @submit.prevent="fetchDistances">
+      <label for="distance">Maximale Entfernung (in Metern):</label>
+      <input type="text" id="distance" v-model="maxDistance" />
+      <button type="submit">Suchen</button>
+    </form>
+
+    <div v-if="distances.length > 0" id="distancesContainer">
+      <h3>Distanz zwischen PLZ weniger als {{ maxDistance }}m</h3>
+      <table border="1" style="border: 1px solid red">
+        <tr bgcolor="#f4eefa">
+          <td><b>Distanz (m)</b></td>
+          <td><b>PLZ Von</b></td>
+          <td><b>PLZ Nach</b></td>
+        </tr>
+        <tr v-for="distance in distances" :key="distance.PLZ_From + '-' + distance.PLZ_To">
+          <td>{{ distance.Distance }}</td>
+          <td>{{ distance.PLZ_From }}</td>
+          <td>{{ distance.PLZ_To }}</td>
+        </tr>
+      </table>
     </div>
+
+    <div id="mapContainer"></div>
   </main>
 </template>
 
@@ -13,11 +34,12 @@ import { onMounted, ref } from 'vue'
 import L from 'leaflet'
 
 const germanyCenter = [51.1657, 10.4515] // Center of Germany
-
 const map = ref(null)
+const maxDistance = ref('')
+const distances = ref([])
 
 const setupLeafletMap = () => {
-  map.value = L.map('mapContainer').setView(germanyCenter, 6) // Zoom level adjusted for visibility
+  map.value = L.map('mapContainer').setView(germanyCenter, 6) // Adjust zoom level as needed
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution:
       'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
@@ -25,33 +47,45 @@ const setupLeafletMap = () => {
   }).addTo(map.value)
 }
 
-const addMarkers = async () => {
+const fetchDistances = async () => {
   try {
-    const response = await fetch('http://127.0.0.1:3000/data')
+    const response = await fetch(`http://127.0.0.1:3000/distance?distance=${maxDistance.value}`)
     const data = await response.json()
-    console.log('Fetched data:', data) // Check the structure of data fetched
+    distances.value = data
+    console.log('Distance data:', data)
 
-    data.forEach((region) => {
-      // Ensure Latitude and Longitude are valid
-      if (region.Latitude !== undefined && region.Longitude !== undefined) {
-        const marker = L.marker([region.Latitude, region.Longitude]).addTo(map.value)
-        marker
-          .bindPopup(
-            `<b>${region.Region}</b><br>Durchschnittsgewicht: ${region.Durchschnittsgewicht.toFixed(2)} kg`
-          )
-          .openPopup()
-      } else {
-        console.warn(`Skipping marker for ${region.Region} due to missing Latitude or Longitude.`)
+    // Clear existing markers
+    map.value.eachLayer((layer) => {
+      if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+        map.value.removeLayer(layer)
       }
     })
+
+    // Display markers or lines for each distance on the map
+    data.forEach((distance) => {
+      const { PLZ_From, PLZ_To, Distance } = distance
+      const fromCoord = getCoordinatesForPLZ(PLZ_From)
+      const toCoord = getCoordinatesForPLZ(PLZ_To)
+
+      if (fromCoord && toCoord) {
+        const line = L.polyline([fromCoord, toCoord], { color: 'blue' }).addTo(map.value)
+        line.bindPopup(`Distanz: ${Distance} m`).openPopup()
+      }
+    })
+
   } catch (error) {
     console.error('Error fetching data:', error)
   }
 }
 
+const getCoordinatesForPLZ = (plz) => {
+  // Replace this function with logic to fetch coordinates based on PLZ
+  // Example: query a backend endpoint to get coordinates for a given PLZ
+  return [51.1657, 10.4515] // Return dummy coordinates for now
+}
+
 onMounted(() => {
   setupLeafletMap()
-  addMarkers()
 })
 </script>
 

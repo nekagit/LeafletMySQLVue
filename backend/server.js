@@ -23,8 +23,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.get("/averageWeight", weightController.averageWeight);
 app.get("/sendingWeight", weightController.sendingWeight);
-app.get("/weight", weightController.weight);
-app.get("/distanceWeight", weightController.distanceWeight);
+app.get("/totalWeight", weightController.totalWeight);
+app.get("/distance", weightController.distance);
 app.get("/shipments", weightController.shipments);
 
 populateDatabase((err) => {

@@ -29,10 +29,9 @@ const addMarkers = async () => {
   try {
     const response = await fetch('http://127.0.0.1:3000/averageWeight')
     const data = await response.json()
-    console.log('Fetched data:', data) // Check the structure of data fetched
+    console.log('Fetched data:', data) 
 
     data.forEach((region) => {
-      // Ensure Latitude and Longitude are valid
       if (region.Latitude !== undefined && region.Longitude !== undefined) {
         const marker = L.marker([region.Latitude, region.Longitude]).addTo(map.value)
         marker
