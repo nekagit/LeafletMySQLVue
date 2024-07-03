@@ -72,16 +72,20 @@ const weightQueries = {
     GROUP BY plz.Name, plz.PLZ, plz.Coord
   `,
   distance: (maxDistance) => `
-       SELECT 
-        ST_Distance_Sphere(plz1.Coord, plz2.Coord) AS Distance,
-        plz1.PLZ AS PLZ_From,
-        plz2.PLZ AS PLZ_To
-    FROM plz AS plz1
-    CROSS JOIN plz AS plz2
-    WHERE ST_Distance_Sphere(plz1.Coord, plz2.Coord) < ${maxDistance}
-        AND plz1.PLZ != plz2.PLZ
-    ORDER BY Distance ASC
-    LIMIT 10
+  SELECT 
+    ST_Distance_Sphere(plz1.Coord, plz2.Coord) AS Distance,
+    plz1.PLZ AS PLZ_From,
+    plz2.PLZ AS PLZ_To,
+    ST_X(plz1.Coord) AS Longitude_From,
+    ST_Y(plz1.Coord) AS Latitude_From,
+    ST_X(plz2.Coord) AS Longitude_To,
+    ST_Y(plz2.Coord) AS Latitude_To
+  FROM plz AS plz1
+  CROSS JOIN plz AS plz2
+  WHERE ST_Distance_Sphere(plz1.Coord, plz2.Coord) < ${maxDistance}
+    AND plz1.PLZ != plz2.PLZ
+  ORDER BY Distance ASC
+  LIMIT 50
 `,
 };
 
@@ -117,7 +121,7 @@ module.exports = {
       return;
     }
     const maxDistance = parseInt(distance);
-    queryDatabase(distanceQuery(maxDistance), res);
+    queryDatabase(weightQueries.distance(maxDistance), res);
   },
   shipments: (req, res) => {
     const { plz } = req.query;

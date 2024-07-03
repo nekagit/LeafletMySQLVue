@@ -15,11 +15,15 @@
           <td><b>Distanz (m)</b></td>
           <td><b>PLZ Von</b></td>
           <td><b>PLZ Nach</b></td>
+          <td><b>Koordinaten Von</b></td>
+          <td><b>Koordinaten Nach</b></td>
         </tr>
         <tr v-for="distance in distances" :key="distance.PLZ_From + '-' + distance.PLZ_To">
           <td>{{ distance.Distance }}</td>
           <td>{{ distance.PLZ_From }}</td>
           <td>{{ distance.PLZ_To }}</td>
+          <td>{{ distance.Coordinates_From }}</td>
+          <td>{{ distance.Coordinates_To }}</td>
         </tr>
       </table>
     </div>
@@ -49,7 +53,10 @@ const setupLeafletMap = () => {
 
 const fetchDistances = async () => {
   try {
-    const response = await fetch(`http://127.0.0.1:3000/distance?distance=${maxDistance.value}`)
+    const response = await fetch(`http://localhost:3000/distance?distance=${maxDistance.value}`)
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
     const data = await response.json()
     distances.value = data
     console.log('Distance data:', data)
@@ -62,26 +69,19 @@ const fetchDistances = async () => {
     })
 
     // Display markers or lines for each distance on the map
-    data.forEach((distance) => {
+    for (let distance of data) {
       const { PLZ_From, PLZ_To, Distance } = distance
-      const fromCoord = getCoordinatesForPLZ(PLZ_From)
-      const toCoord = getCoordinatesForPLZ(PLZ_To)
+      const fromCoord = [distance.Longitude_From, distance.Latitude_From]
+      const toCoord = [distance.Longitude_To, distance.Latitude_To]
 
       if (fromCoord && toCoord) {
         const line = L.polyline([fromCoord, toCoord], { color: 'blue' }).addTo(map.value)
         line.bindPopup(`Distanz: ${Distance} m`).openPopup()
       }
-    })
-
+    }
   } catch (error) {
     console.error('Error fetching data:', error)
   }
-}
-
-const getCoordinatesForPLZ = (plz) => {
-  // Replace this function with logic to fetch coordinates based on PLZ
-  // Example: query a backend endpoint to get coordinates for a given PLZ
-  return [51.1657, 10.4515] // Return dummy coordinates for now
 }
 
 onMounted(() => {
