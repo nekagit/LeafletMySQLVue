@@ -61,12 +61,14 @@ const fetchShipmentsData = async () => {
 
     const bounds = L.latLngBounds()
     data.forEach((shipment) => {
-      const { Latitude, Longitude, Region } = shipment
+      const { Latitude, Longitude, Region, Anzahl_der_Sendungen } = shipment
       if (Latitude && Longitude) {
         const lat = parseFloat(Latitude)
         const lng = parseFloat(Longitude)
         if (!isNaN(lat) && !isNaN(lng)) {
-          const marker = L.marker([lat, lng]).addTo(map.value).bindPopup(Region)
+          const marker = L.marker([lat, lng]).addTo(map.value).bindPopup(
+            `<b>${Region}</b><br>Anzahl der Sendungen: ${Anzahl_der_Sendungen}`
+          )
           bounds.extend(marker.getLatLng())
         }
       }

@@ -25,7 +25,6 @@ app.get("/averageWeight", weightController.averageWeight);
 app.get("/sendingWeight", weightController.sendingWeight);
 app.get("/weight", weightController.weight);
 app.get("/distanceWeight", weightController.distanceWeight);
-app.get("/region", weightController.region);
 app.get("/shipments", weightController.shipments);
 
 populateDatabase((err) => {
