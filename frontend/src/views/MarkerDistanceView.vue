@@ -19,11 +19,11 @@
           <td><b>Koordinaten Nach</b></td>
         </tr>
         <tr v-for="distance in distances" :key="distance.PLZ_From + '-' + distance.PLZ_To">
-          <td>{{ distance.Distance }}</td>
+          <td>{{ distance.Distance.toFixed(2) }}</td>
           <td>{{ distance.PLZ_From }}</td>
           <td>{{ distance.PLZ_To }}</td>
-          <td>{{ distance.Coordinates_From }}</td>
-          <td>{{ distance.Coordinates_To }}</td>
+          <td>{{ distance.Latitude_From.toFixed(4) }}, {{ distance.Longitude_From.toFixed(4) }}</td>
+          <td>{{ distance.Latitude_To.toFixed(4) }}, {{ distance.Longitude_To.toFixed(4) }}</td>
         </tr>
       </table>
     </div>
@@ -39,14 +39,13 @@ import L from 'leaflet'
 
 const germanyCenter = [51.1657, 10.4515] // Center of Germany
 const map = ref(null)
-const maxDistance = ref('')
+const maxDistance = ref('100000') // 100 km for initial test
 const distances = ref([])
 
 const setupLeafletMap = () => {
-  map.value = L.map('mapContainer').setView(germanyCenter, 6) // Adjust zoom level as needed
+  map.value = L.map('mapContainer').setView(germanyCenter, 6)
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution:
-      'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    attribution: 'Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 18
   }).addTo(map.value)
 }
@@ -61,31 +60,51 @@ const fetchDistances = async () => {
     distances.value = data
     console.log('Distance data:', data)
 
-    // Clear existing markers
-    map.value.eachLayer((layer) => {
-      if (layer instanceof L.Marker || layer instanceof L.Polyline) {
-        map.value.removeLayer(layer)
-      }
-    })
-
-    // Display markers or lines for each distance on the map
-    for (let distance of data) {
-      const { PLZ_From, PLZ_To, Distance } = distance
-      const fromCoord = [distance.Longitude_From, distance.Latitude_From]
-      const toCoord = [distance.Longitude_To, distance.Latitude_To]
-
-      if (fromCoord && toCoord) {
-        const line = L.polyline([fromCoord, toCoord], { color: 'blue' }).addTo(map.value)
-        line.bindPopup(`Distanz: ${Distance} m`).openPopup()
-      }
-    }
+    updateMap(data)
   } catch (error) {
     console.error('Error fetching data:', error)
   }
 }
 
+const updateMap = (data) => {
+  // Clear existing markers and polylines
+  map.value.eachLayer((layer) => {
+    if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+      map.value.removeLayer(layer)
+    }
+  })
+
+  const bounds = L.latLngBounds()
+
+  data.forEach((distance) => {
+    const fromCoord = [distance.Latitude_From, distance.Longitude_From]
+    const toCoord = [distance.Latitude_To, distance.Longitude_To]
+
+    // Add markers
+    const fromMarker = L.marker(fromCoord).addTo(map.value)
+    const toMarker = L.marker(toCoord).addTo(map.value)
+
+    // Add line
+    const line = L.polyline([fromCoord, toCoord], { color: 'blue', weight: 2, opacity: 0.5 }).addTo(map.value)
+
+    // Add popups
+    fromMarker.bindPopup(`From: ${distance.PLZ_From}`)
+    toMarker.bindPopup(`To: ${distance.PLZ_To}`)
+    line.bindPopup(`Distance: ${distance.Distance.toFixed(2)} m`)
+
+    // Extend bounds
+    bounds.extend(fromCoord).extend(toCoord)
+  })
+
+  // Fit the map to the bounds
+  if (bounds.isValid()) {
+    map.value.fitBounds(bounds)
+  }
+}
+
 onMounted(() => {
   setupLeafletMap()
+  fetchDistances() // Fetch distances on initial load
 })
 </script>
 
