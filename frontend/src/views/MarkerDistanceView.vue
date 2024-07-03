@@ -39,7 +39,7 @@ import L from 'leaflet'
 
 const germanyCenter = [51.1657, 10.4515] // Center of Germany
 const map = ref(null)
-const maxDistance = ref('100000') // 100 km for initial test
+const maxDistance = ref('1000') // 100 km for initial test
 const distances = ref([])
 
 const setupLeafletMap = () => {
