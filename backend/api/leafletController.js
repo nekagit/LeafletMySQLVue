@@ -24,24 +24,7 @@ const weightQueries = {
     WHERE shipments.Weight > 0 AND shipments.Weight <= 31.5
     GROUP BY plz.PLZ
     ORDER BY AVG(shipments.Weight) DESC
-    LIMIT 1
-  `,
-  sendingWeight: `
-    SELECT 
-        plz.PLZ AS Postleitzahl, 
-        plz.Name AS Region, 
-        plz.Residents AS Einwohner, 
-        AVG(shipments.Weight) AS Durchschnittsgewicht,
-        ST_X(plz.Coord) AS Longitude,
-        ST_Y(plz.Coord) AS Latitude,
-        plz.Area AS Flaeche,
-        plz.Shape AS Geometrie
-    FROM plz
-    LEFT JOIN shipments ON plz.PLZ = shipments.PLZ_From
-    WHERE shipments.Weight > 0 AND shipments.Weight <= 31.5
-    GROUP BY plz.PLZ
-    ORDER BY AVG(shipments.Weight) DESC
-    LIMIT 1
+  LIMIT 5
   `,
   totalWeight: (plz) => `
     SELECT 
@@ -58,6 +41,7 @@ const weightQueries = {
     LEFT JOIN shipments ON plz.PLZ = shipments.PLZ_From
     WHERE plz.PLZ = '${plz}' AND shipments.Weight > 0 AND shipments.Weight <= 31.5
     GROUP BY plz.PLZ
+  LIMIT 5
   `,
   shipments: (plz) => `
     SELECT 
@@ -70,6 +54,7 @@ const weightQueries = {
     INNER JOIN plz ON shipments.PLZ_From = plz.PLZ 
     WHERE shipments.PLZ_From = '${plz}'
     GROUP BY plz.Name, plz.PLZ, plz.Coord
+  LIMIT 5
   `,
   distance: (maxDistance) => `
   SELECT 
@@ -85,7 +70,7 @@ const weightQueries = {
   WHERE ST_Distance_Sphere(plz1.Coord, plz2.Coord) < ${maxDistance}
     AND plz1.PLZ != plz2.PLZ
   ORDER BY Distance ASC
-  LIMIT 50
+  LIMIT 5
 `,
 };
 
@@ -103,7 +88,6 @@ const queryDatabase = (query, res) => {
 
 module.exports = {
   averageWeight: (req, res) => queryDatabase(weightQueries.averageWeight, res),
-  sendingWeight: (req, res) => queryDatabase(weightQueries.sendingWeight, res),
   totalWeight: (req, res) => {
     const { plz } = req.query;
     if (!plz) {
