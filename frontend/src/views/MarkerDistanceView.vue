@@ -39,7 +39,7 @@ import L from 'leaflet'
 
 const germanyCenter = [51.1657, 10.4515] // Center of Germany
 const map = ref(null)
-const maxDistance = ref('1000') // 100 km for initial test
+const maxDistance = ref('') // Initial value for testing
 const distances = ref([])
 
 const setupLeafletMap = () => {
@@ -52,6 +52,11 @@ const setupLeafletMap = () => {
 
 const fetchDistances = async () => {
   try {
+    if (!maxDistance.value) {
+      console.error('Max distance is not specified.')
+      return
+    }
+
     const response = await fetch(`http://localhost:3000/distance?distance=${maxDistance.value}`)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
@@ -104,14 +109,17 @@ const updateMap = (data) => {
 
 onMounted(() => {
   setupLeafletMap()
-  fetchDistances() // Fetch distances on initial load
+  // Fetch distances on initial load, you may remove this if you prefer not to fetch on load
+  if (maxDistance.value) {
+    fetchDistances()
+  }
 })
 </script>
 
 <style scoped>
 #mapContainer {
   margin: 0;
-  width: 100vw;
+   width: 90vw;
   height: 90vh;
   margin-top: 3vh;
 }

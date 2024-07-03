@@ -93,7 +93,7 @@ onMounted(() => {
 <style scoped>
 #mapContainer {
   margin: 0;
-  width: 100vw;
+   width: 90vw;
   height: 90vh;
   margin-top: 3vh;
 }
